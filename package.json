@@ -11,8 +11,12 @@
   "pkg": {
     "assets": [
       "views/**/*",
+<<<<<<< HEAD
       "public/**/*",
       "src/db/*.xlsx"
+=======
+      "public/**/*"
+>>>>>>> 667b63216412e222f0ad98de57635573f2700141
     ],
     "outputPath": "dist"
   },
