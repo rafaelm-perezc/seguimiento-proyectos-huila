@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero Estadístico - Huila</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="header-huila">
+        <div class="container header-content">
+            <h1>GOBERNACIÓN DEL HUILA</h1>
+            <p>TABLERO DE CONTROL ESTADÍSTICO</p>
+        </div>
+    </header>
+
+    <main class="container main-stats-container">
+        <div class="stats-nav">
+            <a href="/" class="btn-secondary">⬅️ VOLVER AL INICIO</a>
+        </div>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="lblTotalProyectos">0</div>
+                <div>Proyectos Registrados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lblTotalInversion">$0</div>
+                <div>Inversión Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lblTotalSedes">0</div>
+                <div>Sedes Impactadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lblPromedioAvance">0%</div>
+                <div>Avance Físico Promedio</div>
+            </div>
+        </section>
+
+        <section class="filters-bar">
+            <strong>FILTRAR GRÁFICAS:</strong>
+            <div class="filter-group">
+                <select id="filtroMunicipio" class="filter-select" aria-label="Filtrar por Municipio">
+                    <option value="">Todos los Municipios</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="filtroProyecto" class="filter-select" aria-label="Filtrar por Proyecto">
+                    <option value="">Todos los Proyectos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <select id="filtroIndicador" class="filter-select" aria-label="Filtrar por Indicador">
+                    <option value="">Todos los Indicadores</option>
+                </select>
+            </div>
+            <button id="btnLimpiarFiltros" class="btn-cancel">Limpiar</button>
+        </section>
+
+        <div class="grid-2">
+            <div class="chart-container">
+                <h3 class="section-title">📈 Evolución de Avance en el Tiempo</h3>
+                <canvas id="chartEvolution"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="section-title">📊 Distribución</h3>
+                <canvas id="chartDistribution"></canvas>
+                <p class="chart-caption">(Visualización comparativa de fuentes de inversión)</p>
+            </div>
+        </div>
+
+    </main>
+    <script src="/js/stats.js"></script>
+</body>
+</html>
