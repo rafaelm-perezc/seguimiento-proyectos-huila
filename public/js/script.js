@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chkMen = document.getElementById('chkMen'); const txtMen = document.getElementById('txtMen');
     const chkSgr = document.getElementById('chkSgr'); const txtSgr = document.getElementById('txtSgr');
     const txtValorTotalManual = document.getElementById('txtValorTotalManual');
+    const financeManualBox = document.querySelector('.finance-manual-box');
     const lblTotal = document.getElementById('lblTotal');
 
     // Ubicación Local (Inputs temporales)
@@ -48,16 +49,25 @@ document.addEventListener('DOMContentLoaded', () => {
     loadIndicadores();
 
     // --- LÓGICA FINANCIERA MIXTA ---
+        function updateFinanceManualVisibility() {
+        const hasAnyChecked = [chkRp, chkSgp, chkMen, chkSgr].some(chk => chk.checked);
+        if (financeManualBox) {
+            financeManualBox.classList.toggle('hidden', hasAnyChecked);
+        }
+    }
+
     function toggleFinance(chk, input) {
         chk.addEventListener('change', () => {
             if(chk.checked) { input.classList.remove('hidden'); input.focus(); }
             else { input.classList.add('hidden'); input.value = ''; calculateTotal(); }
+            updateFinanceManualVisibility();
         });
         input.addEventListener('input', calculateTotal);
     }
     toggleFinance(chkRp, txtRp); toggleFinance(chkSgp, txtSgp);
     toggleFinance(chkMen, txtMen); toggleFinance(chkSgr, txtSgr);
     txtValorTotalManual.addEventListener('input', calculateTotal);
+    updateFinanceManualVisibility();
 
     function calculateTotal() {
         const v1 = parseFloat(txtRp.value) || 0;
@@ -195,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         txtNewMunicipio.classList.add('hidden'); txtNewInstitucion.classList.add('hidden'); txtNewSede.classList.add('hidden');
         txtRp.classList.add('hidden'); txtSgp.classList.add('hidden'); txtMen.classList.add('hidden'); txtSgr.classList.add('hidden');
         lblTotal.textContent = '$0';
+        updateFinanceManualVisibility();
         clearLocationFields();
     }
 
@@ -267,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     txtValorTotalManual.value = p.valor_inicial;
                 }
                 calculateTotal();
+                updateFinanceManualVisibility();
 
                 document.querySelectorAll('#projectInfoSection input').forEach(el => { el.readOnly = true; el.style.backgroundColor = '#e9ecef'; });
                 [chkRp, chkSgp, chkMen, chkSgr].forEach(el => el.disabled = true);
