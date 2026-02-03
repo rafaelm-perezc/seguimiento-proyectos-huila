@@ -86,6 +86,13 @@
 
             <section class="card">
                 <h2 class="section-title">2. DETALLES DE EJECUCIÓN</h2>
+                <div class="grid-2">
+                    <div class="form-group"><label for="selectIndicador">INDICADOR (Aplica a todas las sedes):</label><select id="selectIndicador" name="indicador_id" required></select></div>
+                    <div class="form-group">
+                        <label for="txtResponsable">RESPONSABLE:</label>
+                        <input type="text" id="txtResponsable" name="responsable" required class="input-readonly" readonly>
+                    </div>
+                </div>
                 <div class="form-group full-width">
                     <label for="selectActividad">ACTIVIDAD A CONTRATAR:</label>
                     <select id="selectActividad" name="actividad_id">
@@ -96,19 +103,6 @@
                 <div id="newActivityContainer" class="form-group full-width hidden">
                     <label for="txtNuevaActividad">DESCRIPCIÓN NUEVA ACTIVIDAD:</label>
                     <input type="text" id="txtNuevaActividad" name="nueva_actividad_descripcion">
-                </div>
-
-                <div class="grid-2">
-                    <div class="form-group"><label for="selectIndicador">INDICADOR (Aplica a todas las sedes):</label><select id="selectIndicador" name="indicador_id" required></select></div>
-                    <div class="form-group">
-                        <div class="flex-between-center">
-                            <label for="txtResponsable" class="no-margin">RESPONSABLE:</label>
-                            <div class="flex-center-gap text-small">
-                                <input type="checkbox" id="chkEditResp" class="w-auto"><label for="chkEditResp" class="no-margin cursor-pointer text-green">EDITAR</label>
-                            </div>
-                        </div>
-                        <input type="text" id="txtResponsable" name="responsable" required disabled class="input-readonly">
-                    </div>
                 </div>
                 <div class="form-group">
                      <label for="txtFecha">FECHA SEGUIMIENTO:</label>
