@@ -5,8 +5,15 @@
     }
 
     const cerrarVentana = () => {
-        window.open('', '_self');
-        window.close();
+        try {
+            window.open('about:blank', '_self');
+            window.close();
+        } finally {
+            setTimeout(() => {
+                window.location.replace('about:blank');
+                window.close();
+            }, 100);
+        }
     };
 
     shutdownButtons.forEach((button) => {
