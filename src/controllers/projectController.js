@@ -307,6 +307,30 @@ const controller = {
     exportExcel: async (req, res) => {
         try {
             const rawData = await ProjectModel.getAllDataForExport();
+            const headers = [
+                "CÓDIGO BPIN",
+                "AÑO CONTRATO",
+                "NOMBRE DEL PROYECTO",
+                "CONTRATISTA",
+                "ACTIVIDAD",
+                "MUNICIPIO",
+                "INSTITUCIÓN",
+                "SEDE",
+                "INDICADOR",
+                "VALOR TOTAL INICIAL",
+                "VALOR R.P.",
+                "VALOR S.G.P.",
+                "VALOR MEN",
+                "VALOR S.G.R.",
+                "FUENTE RECURSOS (TEXTO)",
+                "ES ADICIÓN",
+                "VALOR ADICIÓN",
+                "FUENTE ADICIÓN",
+                "% AVANCE",
+                "FECHA SEGUIMIENTO",
+                "RESPONSABLE",
+                "OBSERVACIONES"
+            ];
             const data = rawData.map(row => ({
                 "CÓDIGO BPIN": row.codigo_bpin,
                 "AÑO CONTRATO": row.anio_contrato,
@@ -332,7 +356,7 @@ const controller = {
                 "OBSERVACIONES": row.observaciones
             }));
 
-            const ws = xlsx.utils.json_to_sheet(data);
+            const ws = xlsx.utils.json_to_sheet(data, { header: headers, skipHeader: false });
             const wb = xlsx.utils.book_new();
             xlsx.utils.book_append_sheet(wb, ws, "Seguimiento");
             
