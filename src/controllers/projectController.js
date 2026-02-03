@@ -27,7 +27,20 @@ const controller = {
 
     // BÚSQUEDAS Y GETTERS BÁSICOS
     search: async (req, res) => { try { const q = req.query.q; if (!q) return res.json([]); res.json(await ProjectModel.search(q)); } catch (e) { res.status(500).json({ error: 'Error búsqueda' }); } },
-    getProject: async (req, res) => { try { const p = await ProjectModel.findByBpin(req.params.bpin); if (p) { const a = await ProjectModel.getActivitiesByProject(p.id); res.json({ found: true, project: p, activities: a }); } else { res.json({ found: false }); } } catch (e) { res.status(500).json({ error: 'Error al obtener proyecto' }); } },
+    getProject: async (req, res) => {
+        try {
+            const p = await ProjectModel.findByBpin(req.params.bpin);
+            if (p) {
+                const a = await ProjectModel.getActivitiesByProject(p.id);
+                const locations = await ProjectModel.getProjectLocations(p.id);
+                res.json({ found: true, project: p, activities: a, locations });
+            } else {
+                res.json({ found: false });
+            }
+        } catch (e) {
+            res.status(500).json({ error: 'Error al obtener proyecto' });
+        }
+    },
     getActivityDetails: async (req, res) => { try { res.json(await ProjectModel.getLastTrackingByActivity(req.params.activityId) || {}); } catch (e) { res.status(500).json({ error: e.message }); } },
     getMunicipios: async (req, res) => { try { res.json(await ProjectModel.getAllMunicipios()); } catch (e) { res.status(500).json({error:e.message}); } },
     getInstituciones: async (req, res) => { try { res.json(await ProjectModel.getInstitucionesByMunicipio(req.params.municipioId)); } catch (e) { res.status(500).json({error:e.message}); } },

@@ -66,9 +66,37 @@ const ProjectModel = {
         });
     },
 
-    getActivitiesByProject: (proyectoId) => {
+getActivitiesByProject: (proyectoId) => {
         return new Promise((resolve, reject) => {
             const sql = `SELECT * FROM actividades WHERE proyecto_id = ?`;
+            db.all(sql, [proyectoId], (err, rows) => (err ? reject(err) : resolve(rows)));
+        });
+    },
+
+    getProjectLocations: (proyectoId) => {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT
+                    sed.id as sede_id,
+                    sed.nombre as sede_nombre,
+                    inst.id as institucion_id,
+                    inst.nombre as institucion_nombre,
+                    mun.id as municipio_id,
+                    mun.nombre as municipio_nombre,
+                    seg.porcentaje_avance as ultimo_avance,
+                    seg.fecha_seguimiento as ultima_fecha
+                FROM seguimientos seg
+                JOIN (
+                    SELECT sede_id, MAX(id) as max_id
+                    FROM seguimientos
+                    WHERE proyecto_id = ?
+                    GROUP BY sede_id
+                ) latest ON seg.id = latest.max_id
+                JOIN sedes sed ON seg.sede_id = sed.id
+                JOIN instituciones inst ON sed.institucion_id = inst.id
+                JOIN municipios mun ON inst.municipio_id = mun.id
+                ORDER BY mun.nombre, inst.nombre, sed.nombre
+            `;
             db.all(sql, [proyectoId], (err, rows) => (err ? reject(err) : resolve(rows)));
         });
     },
