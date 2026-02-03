@@ -22,27 +22,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 const upload = multer({ dest: 'uploads/' });
 
 // =========================================================
-// 💀 LÓGICA DE AUTO-CIERRE (HEARTBEAT)
-// =========================================================
-let lastHeartbeat = Date.now(); // Marca de tiempo del último "latido"
-
-// Endpoint que recibe la señal de vida desde el navegador
-app.post('/api/heartbeat', (req, res) => {
-    lastHeartbeat = Date.now(); // Actualizamos la hora
-    res.sendStatus(200);
-});
-
-// Chequeo constante cada 2 segundos
-setInterval(() => {
-    const now = Date.now();
-    // Si han pasado más de 30 minutos (1800000 ms) sin señal, cerramos todo.
-    if (now - lastHeartbeat > 1800000) {
-        console.log("❌ No se detecta actividad en el navegador. Cerrando aplicación...");
-        process.exit(0); // Mata el proceso de Node.js
-    }
-}, 2000);
-
-// =========================================================
 // RUTAS
 // =========================================================
 
@@ -63,6 +42,11 @@ app.get('/api/sedes/:institucionId', projectController.getSedes);
 app.get('/api/indicadores', projectController.getIndicadores);
 app.get('/api/stats/general', projectController.apiGetGeneralStats);
 app.get('/api/stats/evolution', projectController.apiGetEvolution);
+app.post('/api/shutdown', (req, res) => {
+    res.sendStatus(200);
+    console.log("👋 Cierre de sesión solicitado. Cerrando aplicación...");
+    process.exit(0);
+});
 
 // =========================================================
 // INICIAR SERVIDOR
