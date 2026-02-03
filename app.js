@@ -33,8 +33,8 @@ app.post('/api/heartbeat', (req, res) => {
 // Chequeo constante cada 2 segundos
 setInterval(() => {
     const now = Date.now();
-    // Si han pasado más de 5 segundos (5000 ms) sin señal, cerramos todo.
-    if (now - lastHeartbeat > 5000) {
+    // Si han pasado más de 30 minutos (1800000 ms) sin señal, cerramos todo.
+    if (now - lastHeartbeat > 1800000) {
         console.log("❌ No se detecta actividad en el navegador. Cerrando aplicación...");
         process.exit(0); // Mata el proceso de Node.js
     }
