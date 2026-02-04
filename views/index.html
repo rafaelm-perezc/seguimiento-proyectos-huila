@@ -113,27 +113,7 @@
 
             <section id="trackingSection" class="tracking-form card section-border-green">
                 <h2 class="section-title section-title-green">3. AGREGAR UBICACIONES Y AVANCES</h2>
-                <p class="section-desc">Selecciona la ubicación. Puedes registrar avance general del proyecto o avance por sede.</p>
-
-                <div class="checkbox-group">
-                    <input type="radio" id="modoAvanceGeneral" name="modo_avance" value="general">
-                    <label for="modoAvanceGeneral">Usar avance general del proyecto</label>
-                    <input type="radio" id="modoAvanceMixto" name="modo_avance" value="mixto">
-                    <label for="modoAvanceMixto">Usar avance general + avances por sede</label>
-                    <input type="radio" id="modoAvanceSede" name="modo_avance" value="por_sede" checked>
-                    <label for="modoAvanceSede">Usar avance por sede</label>
-                </div>
-
-                <div id="generalAdvanceFields" class="grid-2 hidden">
-                    <div class="form-group">
-                        <label for="txtAvanceGeneral">% AVANCE GENERAL DEL PROYECTO:</label>
-                        <input type="number" id="txtAvanceGeneral" name="avance_general" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="txtObservacionesGeneral">OBSERVACIONES GENERALES:</label>
-                        <textarea id="txtObservacionesGeneral" name="observaciones_general" rows="2"></textarea>
-                    </div>
-                </div>
+                <p class="section-desc">Selecciona la ubicación, ingresa el avance específico y dale clic a "AGREGAR A LISTA". Puedes agregar varias sedes al mismo proyecto.</p>
 
                 <div class="grid-3">
                     <div class="form-group">
@@ -154,8 +134,8 @@
                 </div>
 
                 <div class="grid-2">
-                    <div class="form-group"><label for="txtAvanceLocal">% AVANCE POR SEDE:</label><input type="number" id="txtAvanceLocal" step="0.01"></div>
-                    <div class="form-group"><label for="txtObservacionesLocal">OBSERVACIONES POR SEDE:</label><textarea id="txtObservacionesLocal" rows="1"></textarea></div>
+                    <div class="form-group"><label for="txtAvanceLocal">% AVANCE EN ESTA SEDE:</label><input type="number" id="txtAvanceLocal" step="0.01"></div>
+                    <div class="form-group"><label for="txtObservacionesLocal">OBSERVACIONES:</label><textarea id="txtObservacionesLocal" rows="1"></textarea></div>
                 </div>
 
                 <div class="btn-container-center">

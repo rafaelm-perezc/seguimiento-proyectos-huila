@@ -121,37 +121,7 @@ const controller = {
             const ubicaciones = JSON.parse(data.ubicaciones || "[]");
             if (ubicaciones.length === 0) return res.status(400).json({ error: 'Debes agregar al menos una sede.' });
 
-            const modoAvance = data.modo_avance || 'por_sede';
-            const avanceGeneral = data.avance_general !== undefined && data.avance_general !== ''
-                ? parseFloat(data.avance_general)
-                : null;
-            const observacionesGeneral = data.observaciones_general || '';
-
-            if (modoAvance === 'general') {
-                if (avanceGeneral === null || Number.isNaN(avanceGeneral)) {
-                    return res.status(400).json({ error: 'Debes ingresar el % de avance general.' });
-                }
-                ubicaciones.forEach(loc => {
-                    loc.avance = avanceGeneral;
-                    if (!loc.observaciones || !loc.observaciones.trim()) {
-                        loc.observaciones = observacionesGeneral;
-                    }
-                });
-            } else if (modoAvance === 'mixto' && avanceGeneral !== null && !Number.isNaN(avanceGeneral)) {
-                ubicaciones.forEach(loc => {
-                    if (loc.avance === null || loc.avance === undefined || loc.avance === '') {
-                        loc.avance = avanceGeneral;
-                    }
-                    if ((!loc.observaciones || !loc.observaciones.trim()) && observacionesGeneral) {
-                        loc.observaciones = observacionesGeneral;
-                    }
-                });
-            }
-
             for (const loc of ubicaciones) {
-                if (loc.avance === null || loc.avance === undefined || loc.avance === '') {
-                    return res.status(400).json({ error: 'Cada sede debe tener % de avance válido.' });
-                }
                 let mId = loc.municipio_id;
                 let iId = loc.institucion_id;
                 let sId = loc.sede_id;
