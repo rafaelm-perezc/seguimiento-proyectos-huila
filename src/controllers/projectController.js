@@ -121,7 +121,41 @@ const controller = {
             const ubicaciones = JSON.parse(data.ubicaciones || "[]");
             if (ubicaciones.length === 0) return res.status(400).json({ error: 'Debes agregar al menos una sede.' });
 
+            const modoAvance = data.modo_avance || 'por_sede';
+            const avanceGeneral = data.avance_general !== undefined && data.avance_general !== null && `${data.avance_general}`.trim() !== ''
+                ? parseFloat(data.avance_general)
+                : null;
+            const observacionesGeneral = data.observaciones_general || '';
+
+            if (modoAvance === 'general') {
+                if (avanceGeneral === null || Number.isNaN(avanceGeneral)) {
+                    return res.status(400).json({ error: 'Debes ingresar el % de avance general.' });
+                }
+                if (!observacionesGeneral.trim()) {
+                    return res.status(400).json({ error: 'Debes ingresar observaciones generales.' });
+                }
+                ubicaciones.forEach(loc => {
+                    loc.avance = avanceGeneral;
+                    loc.observaciones = observacionesGeneral;
+                });
+            } else if (avanceGeneral !== null && !Number.isNaN(avanceGeneral)) {
+                const avances = ubicaciones.map(loc => parseFloat(loc.avance));
+                if (avances.some(avance => Number.isNaN(avance))) {
+                    return res.status(400).json({ error: 'Cada sede debe tener % de avance válido.' });
+                }
+                const promedio = avances.reduce((acc, val) => acc + val, 0) / avances.length;
+                if (Math.abs(promedio - avanceGeneral) > 0.1) {
+                    return res.status(400).json({ error: 'El avance general no concuerda con el promedio por sede.' });
+                }
+            }
+
             for (const loc of ubicaciones) {
+                if (loc.avance === null || loc.avance === undefined || loc.avance === '' || Number.isNaN(parseFloat(loc.avance))) {
+                    return res.status(400).json({ error: 'Cada sede debe tener % de avance válido.' });
+                }
+                if (modoAvance === 'general' && (!loc.observaciones || !loc.observaciones.trim())) {
+                    return res.status(400).json({ error: 'Cada sede debe tener observaciones válidas.' });
+                }
                 let mId = loc.municipio_id;
                 let iId = loc.institucion_id;
                 let sId = loc.sede_id;
