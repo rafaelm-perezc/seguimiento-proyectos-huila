@@ -33,6 +33,8 @@ app.get('/estadisticas', projectController.statsView);
 app.get('/api/search', projectController.search);
 app.get('/api/project/:bpin', projectController.getProject);
 app.get('/api/activity-details/:activityId', projectController.getActivityDetails);
+// Nueva ruta para consultar sedes por actividad
+app.get('/api/activity-locations/:activityId', projectController.getActivityLocations);
 app.post('/api/save', projectController.saveData);
 app.post('/api/upload-excel', upload.single('archivoExcel'), projectController.uploadExcel);
 app.get('/api/export-excel', projectController.exportExcel);
