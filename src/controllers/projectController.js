@@ -122,7 +122,7 @@ const controller = {
             if (ubicaciones.length === 0) return res.status(400).json({ error: 'Debes agregar al menos una sede.' });
 
             const modoAvance = data.modo_avance || 'por_sede';
-            const avanceGeneral = data.avance_general !== undefined && data.avance_general !== null && `${data.avance_general}`.trim() !== ''
+            const avanceGeneral = data.avance_general !== undefined && data.avance_general !== ''
                 ? parseFloat(data.avance_general)
                 : null;
             const observacionesGeneral = data.observaciones_general || '';
@@ -131,30 +131,26 @@ const controller = {
                 if (avanceGeneral === null || Number.isNaN(avanceGeneral)) {
                     return res.status(400).json({ error: 'Debes ingresar el % de avance general.' });
                 }
-                if (!observacionesGeneral.trim()) {
-                    return res.status(400).json({ error: 'Debes ingresar observaciones generales.' });
-                }
                 ubicaciones.forEach(loc => {
                     loc.avance = avanceGeneral;
-                    loc.observaciones = observacionesGeneral;
+                    if (!loc.observaciones || !loc.observaciones.trim()) {
+                        loc.observaciones = observacionesGeneral;
+                    }
                 });
-            } else if (avanceGeneral !== null && !Number.isNaN(avanceGeneral)) {
-                const avances = ubicaciones.map(loc => parseFloat(loc.avance));
-                if (avances.some(avance => Number.isNaN(avance))) {
-                    return res.status(400).json({ error: 'Cada sede debe tener % de avance válido.' });
-                }
-                const promedio = avances.reduce((acc, val) => acc + val, 0) / avances.length;
-                if (Math.abs(promedio - avanceGeneral) > 0.1) {
-                    return res.status(400).json({ error: 'El avance general no concuerda con el promedio por sede.' });
-                }
+            } else if (modoAvance === 'mixto' && avanceGeneral !== null && !Number.isNaN(avanceGeneral)) {
+                ubicaciones.forEach(loc => {
+                    if (loc.avance === null || loc.avance === undefined || loc.avance === '') {
+                        loc.avance = avanceGeneral;
+                    }
+                    if ((!loc.observaciones || !loc.observaciones.trim()) && observacionesGeneral) {
+                        loc.observaciones = observacionesGeneral;
+                    }
+                });
             }
 
             for (const loc of ubicaciones) {
-                if (loc.avance === null || loc.avance === undefined || loc.avance === '' || Number.isNaN(parseFloat(loc.avance))) {
+                if (loc.avance === null || loc.avance === undefined || loc.avance === '') {
                     return res.status(400).json({ error: 'Cada sede debe tener % de avance válido.' });
-                }
-                if (modoAvance === 'general' && (!loc.observaciones || !loc.observaciones.trim())) {
-                    return res.status(400).json({ error: 'Cada sede debe tener observaciones válidas.' });
                 }
                 let mId = loc.municipio_id;
                 let iId = loc.institucion_id;
