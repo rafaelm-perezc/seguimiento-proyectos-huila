@@ -101,6 +101,35 @@ getActivitiesByProject: (proyectoId) => {
         });
     },
 
+    // Obtener sedes por actividad (último seguimiento por sede)
+    getLocationsByActivity: (actividadId) => {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT
+                    sed.id as sede_id,
+                    sed.nombre as sede_nombre,
+                    inst.id as institucion_id,
+                    inst.nombre as institucion_nombre,
+                    mun.id as municipio_id,
+                    mun.nombre as municipio_nombre,
+                    seg.porcentaje_avance as ultimo_avance,
+                    seg.fecha_seguimiento as ultima_fecha
+                FROM seguimientos seg
+                JOIN (
+                    SELECT sede_id, MAX(id) as max_id
+                    FROM seguimientos
+                    WHERE actividad_id = ?
+                    GROUP BY sede_id
+                ) latest ON seg.id = latest.max_id
+                JOIN sedes sed ON seg.sede_id = sed.id
+                JOIN instituciones inst ON sed.institucion_id = inst.id
+                JOIN municipios mun ON inst.municipio_id = mun.id
+                ORDER BY mun.nombre, inst.nombre, sed.nombre
+            `;
+            db.all(sql, [actividadId], (err, rows) => (err ? reject(err) : resolve(rows)));
+        });
+    },
+
     // Obtener último seguimiento para autocompletar ubicación
     getLastTrackingByActivity: (actividadId) => {
         return new Promise((resolve, reject) => {

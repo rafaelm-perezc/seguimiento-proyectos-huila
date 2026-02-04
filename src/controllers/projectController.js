@@ -42,6 +42,14 @@ const controller = {
         }
     },
     getActivityDetails: async (req, res) => { try { res.json(await ProjectModel.getLastTrackingByActivity(req.params.activityId) || {}); } catch (e) { res.status(500).json({ error: e.message }); } },
+    // Nueva ruta para listar sedes asociadas a una actividad
+    getActivityLocations: async (req, res) => {
+        try {
+            res.json(await ProjectModel.getLocationsByActivity(req.params.activityId));
+        } catch (e) {
+            res.status(500).json({ error: e.message });
+        }
+    },
     getMunicipios: async (req, res) => { try { res.json(await ProjectModel.getAllMunicipios()); } catch (e) { res.status(500).json({error:e.message}); } },
     getInstituciones: async (req, res) => { try { res.json(await ProjectModel.getInstitucionesByMunicipio(req.params.municipioId)); } catch (e) { res.status(500).json({error:e.message}); } },
     getSedes: async (req, res) => { try { res.json(await ProjectModel.getSedesByInstitucion(req.params.institucionId)); } catch (e) { res.status(500).json({error:e.message}); } },

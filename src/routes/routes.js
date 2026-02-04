@@ -17,6 +17,7 @@ router.get('/', projectController.index);
 router.get('/api/search', projectController.search);
 router.get('/api/project/:bpin', projectController.getProject);
 router.get('/api/activity-details/:activityId', projectController.getActivityDetails); // NUEVA RUTA
+router.get('/api/activity-locations/:activityId', projectController.getActivityLocations);
 
 router.get('/api/municipios', projectController.getMunicipios);
 router.get('/api/instituciones/:municipioId', projectController.getInstituciones);
