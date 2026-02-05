@@ -38,6 +38,7 @@ app.get('/api/activity-locations/:activityId', projectController.getActivityLoca
 app.post('/api/save', projectController.saveData);
 app.post('/api/upload-excel', upload.single('archivoExcel'), projectController.uploadExcel);
 app.get('/api/export-excel', projectController.exportExcel);
+app.get('/api/export-excel-template', projectController.exportExcelTemplate);
 app.get('/api/municipios', projectController.getMunicipios);
 app.get('/api/instituciones/:municipioId', projectController.getInstituciones);
 app.get('/api/sedes/:institucionId', projectController.getSedes);

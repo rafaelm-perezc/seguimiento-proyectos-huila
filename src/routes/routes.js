@@ -27,5 +27,6 @@ router.get('/api/indicadores', projectController.getIndicadores);
 router.post('/api/save', projectController.saveData);
 router.post('/api/upload-excel', upload.single('archivoExcel'), projectController.uploadExcel);
 router.get('/api/export-excel', projectController.exportExcel);
+router.get('/api/export-excel-template', projectController.exportExcelTemplate);
 
 module.exports = router;

@@ -21,23 +21,30 @@ const normalizeHeader = (row) => {
     return newRow;
 };
 
-const parseFechaSeguimiento = (value) => {
-    if (!value) return null;
-    if (value instanceof Date && !isNaN(value)) return value;
-    if (typeof value === 'number') {
-        const parsed = xlsx.SSF.parse_date_code(value);
-        if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
-        return null;
-    }
-    const str = value.toString().trim();
-    const match = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (match) {
-        const [, d, m, y] = match;
-        return new Date(Number(y), Number(m) - 1, Number(d));
-    }
-    const asDate = new Date(str);
-    return isNaN(asDate) ? null : asDate;
-};
+const EXPORT_HEADERS = [
+    "CÓDIGO BPIN",
+    "AÑO CONTRATO",
+    "NOMBRE DEL PROYECTO",
+    "CONTRATISTA",
+    "ACTIVIDAD",
+    "MUNICIPIO",
+    "INSTITUCIÓN",
+    "SEDE",
+    "INDICADOR",
+    "VALOR TOTAL INICIAL",
+    "VALOR R.P.",
+    "VALOR S.G.P.",
+    "VALOR MEN",
+    "VALOR S.G.R.",
+    "FUENTE RECURSOS (TEXTO)",
+    "ES ADICIÓN",
+    "VALOR ADICIÓN",
+    "FUENTE ADICIÓN",
+    "% AVANCE",
+    "FECHA SEGUIMIENTO",
+    "RESPONSABLE",
+    "OBSERVACIONES"
+];
 
 const controller = {
 
@@ -352,30 +359,6 @@ const controller = {
     exportExcel: async (req, res) => {
         try {
             const rawData = await ProjectModel.getAllDataForExport();
-            const headers = [
-                "CÓDIGO BPIN",
-                "AÑO CONTRATO",
-                "NOMBRE DEL PROYECTO",
-                "CONTRATISTA",
-                "ACTIVIDAD",
-                "MUNICIPIO",
-                "INSTITUCIÓN",
-                "SEDE",
-                "INDICADOR",
-                "VALOR TOTAL INICIAL",
-                "VALOR R.P.",
-                "VALOR S.G.P.",
-                "VALOR MEN",
-                "VALOR S.G.R.",
-                "FUENTE RECURSOS (TEXTO)",
-                "ES ADICIÓN",
-                "VALOR ADICIÓN",
-                "FUENTE ADICIÓN",
-                "% AVANCE",
-                "FECHA SEGUIMIENTO",
-                "RESPONSABLE",
-                "OBSERVACIONES"
-            ];
             const data = rawData.map(row => ({
                 "CÓDIGO BPIN": row.codigo_bpin,
                 "AÑO CONTRATO": row.anio_contrato,
@@ -396,33 +379,12 @@ const controller = {
                 "VALOR ADICIÓN": row.valor_adicion,
                 "FUENTE ADICIÓN": row.fuente_adicion,
                 "% AVANCE": row.porcentaje_avance,
-                "FECHA SEGUIMIENTO": parseFechaSeguimiento(row.fecha_seguimiento),
+                "FECHA SEGUIMIENTO": row.fecha_seguimiento,
                 "RESPONSABLE": row.responsable,
                 "OBSERVACIONES": row.observaciones
             }));
 
-            const ws = xlsx.utils.json_to_sheet(data, { header: headers, skipHeader: false });
-            ws['!cols'] = [
-                { wch: 16 }, { wch: 14 }, { wch: 42 }, { wch: 28 }, { wch: 42 }, { wch: 20 },
-                { wch: 30 }, { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
-                { wch: 15 }, { wch: 15 }, { wch: 26 }, { wch: 12 }, { wch: 16 }, { wch: 22 },
-                { wch: 12 }, { wch: 18 }, { wch: 24 }, { wch: 40 }
-            ];
-
-            const range = xlsx.utils.decode_range(ws['!ref']);
-            for (let R = 1; R <= range.e.r; R++) {
-                const setCellFormat = (col, type, format) => {
-                    const ref = xlsx.utils.encode_cell({ r: R, c: col });
-                    if (!ws[ref]) return;
-                    ws[ref].t = type;
-                    if (format) ws[ref].z = format;
-                };
-
-                [1].forEach(col => setCellFormat(col, 'n', '0')); // AÑO CONTRATO
-                [9, 10, 11, 12, 13, 16].forEach(col => setCellFormat(col, 'n', '$#,##0.00_);[Red]($#,##0.00)')); // Dinero
-                [18].forEach(col => setCellFormat(col, 'n', '0.00')); // % AVANCE
-                setCellFormat(19, 'd', 'dd/mm/yyyy'); // FECHA
-            }
+            const ws = xlsx.utils.json_to_sheet(data, { header: EXPORT_HEADERS, skipHeader: false });
 
             const wb = xlsx.utils.book_new();
             xlsx.utils.book_append_sheet(wb, ws, "Seguimiento");
@@ -432,6 +394,42 @@ const controller = {
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             res.send(buffer);
         } catch (error) { res.status(500).send('Error generando el reporte.'); }
+    },
+
+    exportExcelTemplate: async (req, res) => {
+        try {
+            const totalFilasPlantilla = 300;
+            const bodyRows = Array.from({ length: totalFilasPlantilla }, () => Array(EXPORT_HEADERS.length).fill(''));
+            const ws = xlsx.utils.aoa_to_sheet([EXPORT_HEADERS, ...bodyRows], { sheetStubs: true });
+            ws['!cols'] = [
+                { wch: 16 }, { wch: 14 }, { wch: 42 }, { wch: 28 }, { wch: 42 }, { wch: 20 },
+                { wch: 30 }, { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
+                { wch: 15 }, { wch: 15 }, { wch: 26 }, { wch: 12 }, { wch: 16 }, { wch: 22 },
+                { wch: 12 }, { wch: 18 }, { wch: 24 }, { wch: 40 }
+            ];
+
+            const range = xlsx.utils.decode_range(ws['!ref']);
+            for (let R = 1; R <= range.e.r; R++) {
+                const applyFormat = (col, format) => {
+                    const ref = xlsx.utils.encode_cell({ r: R, c: col });
+                    if (!ws[ref]) ws[ref] = { t: 's', v: '' };
+                    ws[ref].z = format;
+                };
+
+                [1].forEach(col => setCellFormat(col, 'n', '0')); // AÑO CONTRATO
+                [9, 10, 11, 12, 13, 16].forEach(col => applyFormat(col, '_-* #,##0.00_-;\-* #,##0.00_-;_-* "-"??_-;_-@_-')); // Contabilidad
+                [18].forEach(col => setCellFormat(col, 'n', '0.00')); // % AVANCE
+                setCellFormat(19, 'd', 'dd/mm/yyyy'); // FECHA
+            }
+
+            const wb = xlsx.utils.book_new();
+            xlsx.utils.book_append_sheet(wb, ws, "Plantilla");
+            
+            const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+            res.setHeader('Content-Disposition', 'attachment; filename="Plantilla_Cargue_Masivo_Huila.xlsx"');
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.send(buffer);
+        } catch (error) { res.status(500).send('Error generando plantilla.'); }
     },
 
     // -------------------------------------------------------------
