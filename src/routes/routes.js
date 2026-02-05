@@ -23,6 +23,11 @@ router.get('/api/municipios', projectController.getMunicipios);
 router.get('/api/instituciones/:municipioId', projectController.getInstituciones);
 router.get('/api/sedes/:institucionId', projectController.getSedes);
 router.get('/api/indicadores', projectController.getIndicadores);
+router.get('/api/filtros/proyectos', projectController.getProjectsByIndicador);
+router.get('/api/filtros/actividades', projectController.getActivitiesByFilters);
+router.get('/api/filtros/municipios', projectController.getMunicipiosByFilters);
+router.get('/api/filtros/instituciones', projectController.getInstitucionesByFilters);
+router.get('/api/filtros/sedes', projectController.getSedesByFilters);
 
 router.post('/api/save', projectController.saveData);
 router.post('/api/upload-excel', upload.single('archivoExcel'), projectController.uploadExcel);

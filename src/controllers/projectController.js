@@ -442,10 +442,58 @@ const controller = {
         res.sendFile(path.resolve(__dirname, '../../views/stats.html')); 
     },
 
+
+    getProjectsByIndicador: async (req, res) => {
+        try {
+            if (!req.query.indicador_id) return res.json([]);
+            res.json(await ProjectModel.getProjectsByIndicador(req.query.indicador_id));
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    },
+
+    getActivitiesByFilters: async (req, res) => {
+        try {
+            const { indicador_id, proyecto_id } = req.query;
+            if (!indicador_id || !proyecto_id) return res.json([]);
+            res.json(await ProjectModel.getActivitiesByIndicatorProject(indicador_id, proyecto_id));
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    },
+
+    getMunicipiosByFilters: async (req, res) => {
+        try {
+            const { indicador_id, proyecto_id, actividad_id } = req.query;
+            if (!indicador_id || !proyecto_id || !actividad_id) return res.json([]);
+            res.json(await ProjectModel.getMunicipiosByFilters({ indicador_id, proyecto_id, actividad_id }));
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    },
+
+    getInstitucionesByFilters: async (req, res) => {
+        try {
+            const { indicador_id, proyecto_id, actividad_id, municipio_id } = req.query;
+            if (!indicador_id || !proyecto_id || !actividad_id || !municipio_id) return res.json([]);
+            res.json(await ProjectModel.getInstitucionesByFilters({ indicador_id, proyecto_id, actividad_id, municipio_id }));
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    },
+
+    getSedesByFilters: async (req, res) => {
+        try {
+            const { indicador_id, proyecto_id, actividad_id, institucion_id } = req.query;
+            if (!indicador_id || !proyecto_id || !actividad_id || !institucion_id) return res.json([]);
+            res.json(await ProjectModel.getSedesByFilters({ indicador_id, proyecto_id, actividad_id, institucion_id }));
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    },
+
     // 2. API: DATOS GENERALES (Tarjetas de resumen)
     apiGetGeneralStats: async (req, res) => {
         try {
-            const stats = await ProjectModel.getGeneralStats();
+            const filters = {
+                indicador_id: req.query.indicador_id,
+                proyecto_id: req.query.proyecto_id,
+                actividad_id: req.query.actividad_id,
+                municipio_id: req.query.municipio_id,
+                institucion_id: req.query.institucion_id,
+                sede_id: req.query.sede_id
+            };
+            const stats = await ProjectModel.getGeneralStats(filters);
             res.json(stats);
         } catch (e) { res.status(500).json({ error: e.message }); }
     },
@@ -455,10 +503,12 @@ const controller = {
         try {
             // Recogemos los filtros de la URL (ej: ?municipio_id=1)
             const filters = {
+                indicador_id: req.query.indicador_id,
                 proyecto_id: req.query.proyecto_id,
+                actividad_id: req.query.actividad_id,
                 municipio_id: req.query.municipio_id,
-                sede_id: req.query.sede_id,
-                indicador_id: req.query.indicador_id
+                institucion_id: req.query.institucion_id,
+                sede_id: req.query.sede_id
             };
             const data = await ProjectModel.getEvolutionData(filters);
             res.json(data);

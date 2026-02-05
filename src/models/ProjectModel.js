@@ -221,22 +221,117 @@ getActivitiesByProject: (proyectoId) => {
     //   ⬇️ AQUÍ EMPIEZA EL CÓDIGO NUEVO PARA LAS GRÁFICAS ⬇️
     // -------------------------------------------------------------
 
-    // 1. Totales Generales (Para tarjetas de resumen)
-    getGeneralStats: () => {
+    // 1. Totales para tarjetas de resumen (con filtros opcionales)
+    getGeneralStats: (filters = {}) => {
+        return new Promise((resolve, reject) => {
+            const whereClauses = [];
+            const params = [];
+
+            if (filters.indicador_id) { whereClauses.push('s.indicador_id = ?'); params.push(filters.indicador_id); }
+            if (filters.proyecto_id) { whereClauses.push('s.proyecto_id = ?'); params.push(filters.proyecto_id); }
+            if (filters.actividad_id) { whereClauses.push('s.actividad_id = ?'); params.push(filters.actividad_id); }
+            if (filters.municipio_id) { whereClauses.push('m.id = ?'); params.push(filters.municipio_id); }
+            if (filters.institucion_id) { whereClauses.push('inst.id = ?'); params.push(filters.institucion_id); }
+            if (filters.sede_id) { whereClauses.push('s.sede_id = ?'); params.push(filters.sede_id); }
+
+            const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+            const sql = `
+                WITH seguimientos_filtrados AS (
+                    SELECT s.*
+                    FROM seguimientos s
+                    LEFT JOIN sedes sed ON s.sede_id = sed.id
+                    LEFT JOIN instituciones inst ON sed.institucion_id = inst.id
+                    LEFT JOIN municipios m ON inst.municipio_id = m.id
+                    ${whereSql}
+                )
+                SELECT
+                    (SELECT COUNT(DISTINCT proyecto_id) FROM seguimientos_filtrados) as total_proyectos,
+                    (SELECT COALESCE(SUM(p.valor_inicial), 0) FROM proyectos p WHERE p.id IN (SELECT DISTINCT proyecto_id FROM seguimientos_filtrados)) as total_inversion,
+                    (SELECT COUNT(DISTINCT sede_id) FROM seguimientos_filtrados WHERE sede_id IS NOT NULL) as total_sedes,
+                    (SELECT COALESCE(AVG(porcentaje_avance), 0) FROM seguimientos_filtrados) as promedio_avance_global
+            `;
+
+            db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row || {
+                total_proyectos: 0,
+                total_inversion: 0,
+                total_sedes: 0,
+                promedio_avance_global: 0
+            })));
+        });
+    },
+
+    getProjectsByIndicador: (indicadorId) => {
         return new Promise((resolve, reject) => {
             const sql = `
-                SELECT 
-                    (SELECT COUNT(*) FROM proyectos) as total_proyectos,
-                    (SELECT SUM(valor_inicial) FROM proyectos) as total_inversion,
-                    (SELECT COUNT(*) FROM sedes) as total_sedes,
-                    (SELECT AVG(porcentaje_avance) FROM seguimientos) as promedio_avance_global
+                SELECT DISTINCT p.id, p.nombre_proyecto as nombre
+                FROM seguimientos s
+                JOIN proyectos p ON s.proyecto_id = p.id
+                WHERE s.indicador_id = ?
+                ORDER BY p.nombre_proyecto
             `;
-            db.get(sql, [], (err, row) => (err ? reject(err) : resolve(row)));
+            db.all(sql, [indicadorId], (err, rows) => (err ? reject(err) : resolve(rows)));
+        });
+    },
+
+    getActivitiesByIndicatorProject: (indicadorId, proyectoId) => {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT DISTINCT a.id, a.descripcion as nombre
+                FROM seguimientos s
+                JOIN actividades a ON s.actividad_id = a.id
+                WHERE s.indicador_id = ? AND s.proyecto_id = ?
+                ORDER BY a.descripcion
+            `;
+            db.all(sql, [indicadorId, proyectoId], (err, rows) => (err ? reject(err) : resolve(rows)));
+        });
+    },
+
+    getMunicipiosByFilters: (filters) => {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT DISTINCT m.id, m.nombre
+                FROM seguimientos s
+                JOIN sedes sed ON s.sede_id = sed.id
+                JOIN instituciones inst ON sed.institucion_id = inst.id
+                JOIN municipios m ON inst.municipio_id = m.id
+                WHERE s.indicador_id = ? AND s.proyecto_id = ? AND s.actividad_id = ?
+                ORDER BY m.nombre
+            `;
+            db.all(sql, [filters.indicador_id, filters.proyecto_id, filters.actividad_id], (err, rows) => (err ? reject(err) : resolve(rows)));
+        });
+    },
+
+    getInstitucionesByFilters: (filters) => {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT DISTINCT inst.id, inst.nombre
+                FROM seguimientos s
+                JOIN sedes sed ON s.sede_id = sed.id
+                JOIN instituciones inst ON sed.institucion_id = inst.id
+                JOIN municipios m ON inst.municipio_id = m.id
+                WHERE s.indicador_id = ? AND s.proyecto_id = ? AND s.actividad_id = ? AND m.id = ?
+                ORDER BY inst.nombre
+            `;
+            db.all(sql, [filters.indicador_id, filters.proyecto_id, filters.actividad_id, filters.municipio_id], (err, rows) => (err ? reject(err) : resolve(rows)));
+        });
+    },
+
+    getSedesByFilters: (filters) => {
+        return new Promise((resolve, reject) => {
+            const sql = `
+                SELECT DISTINCT sed.id, sed.nombre
+                FROM seguimientos s
+                JOIN sedes sed ON s.sede_id = sed.id
+                JOIN instituciones inst ON sed.institucion_id = inst.id
+                WHERE s.indicador_id = ? AND s.proyecto_id = ? AND s.actividad_id = ? AND inst.id = ?
+                ORDER BY sed.nombre
+            `;
+            db.all(sql, [filters.indicador_id, filters.proyecto_id, filters.actividad_id, filters.institucion_id], (err, rows) => (err ? reject(err) : resolve(rows)));
         });
     },
 
     // 2. Evolución temporal (Gráfica de Línea)
-    // Recibe un objeto 'filters' con los IDs para filtrar la consulta
     getEvolutionData: (filters) => {
         return new Promise((resolve, reject) => {
             let sql = `
@@ -254,13 +349,20 @@ getActivitiesByProject: (proyectoId) => {
             const params = [];
 
             // Aplicar filtros si existen
-            if (filters.proyecto_id) { sql += " AND s.proyecto_id = ?"; params.push(filters.proyecto_id); }
-            if (filters.municipio_id) { sql += " AND m.id = ?"; params.push(filters.municipio_id); }
-            if (filters.sede_id) { sql += " AND s.sede_id = ?"; params.push(filters.sede_id); }
             if (filters.indicador_id) { sql += " AND s.indicador_id = ?"; params.push(filters.indicador_id); }
+            if (filters.proyecto_id) { sql += " AND s.proyecto_id = ?"; params.push(filters.proyecto_id); }
+            if (filters.actividad_id) { sql += " AND s.actividad_id = ?"; params.push(filters.actividad_id); }
+            if (filters.municipio_id) { sql += " AND m.id = ?"; params.push(filters.municipio_id); }
+            if (filters.institucion_id) { sql += " AND inst.id = ?"; params.push(filters.institucion_id); }
+            if (filters.sede_id) { sql += " AND s.sede_id = ?"; params.push(filters.sede_id); }
+
+            sql = sql.replace('AVG(s.porcentaje_avance) as avance_promedio', `AVG(s.porcentaje_avance) as avance_promedio,
+                    GROUP_CONCAT(DISTINCT CASE
+                        WHEN s.observaciones IS NOT NULL AND TRIM(s.observaciones) <> ''
+                        THEN TRIM(s.observaciones)
+                    END) as comentarios`);
 
             // Agrupar por fecha y ordenar
-            // Truco: Ordenar fechas tipo texto DD/MM/YYYY correctamente para que la gráfica salga en orden
             sql += ` GROUP BY s.fecha_seguimiento 
                      ORDER BY substr(s.fecha_seguimiento, 7, 4) || '-' || substr(s.fecha_seguimiento, 4, 2) || '-' || substr(s.fecha_seguimiento, 1, 2) ASC`;
 

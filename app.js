@@ -43,6 +43,11 @@ app.get('/api/municipios', projectController.getMunicipios);
 app.get('/api/instituciones/:municipioId', projectController.getInstituciones);
 app.get('/api/sedes/:institucionId', projectController.getSedes);
 app.get('/api/indicadores', projectController.getIndicadores);
+app.get('/api/filtros/proyectos', projectController.getProjectsByIndicador);
+app.get('/api/filtros/actividades', projectController.getActivitiesByFilters);
+app.get('/api/filtros/municipios', projectController.getMunicipiosByFilters);
+app.get('/api/filtros/instituciones', projectController.getInstitucionesByFilters);
+app.get('/api/filtros/sedes', projectController.getSedesByFilters);
 app.get('/api/stats/general', projectController.apiGetGeneralStats);
 app.get('/api/stats/evolution', projectController.apiGetEvolution);
 app.post('/api/shutdown', (req, res) => {
