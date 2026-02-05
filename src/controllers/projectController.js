@@ -21,6 +21,24 @@ const normalizeHeader = (row) => {
     return newRow;
 };
 
+const parseFechaSeguimiento = (value) => {
+    if (!value) return null;
+    if (value instanceof Date && !isNaN(value)) return value;
+    if (typeof value === 'number') {
+        const parsed = xlsx.SSF.parse_date_code(value);
+        if (parsed) return new Date(parsed.y, parsed.m - 1, parsed.d);
+        return null;
+    }
+    const str = value.toString().trim();
+    const match = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (match) {
+        const [, d, m, y] = match;
+        return new Date(Number(y), Number(m) - 1, Number(d));
+    }
+    const asDate = new Date(str);
+    return isNaN(asDate) ? null : asDate;
+};
+
 const controller = {
 
     index: (req, res) => { res.sendFile(path.resolve(__dirname, '../../views/index.html')); },
@@ -136,7 +154,8 @@ const controller = {
 
                 // Crear entidades si son nuevas
                 if (String(mId).startsWith('new_')) {
-                    const munName = loc.nombre_municipio_nuevo;
+                    const munName = cleanData(loc.nombre_municipio_nuevo);
+                    if (!munName) return res.status(400).json({ error: 'Nombre de municipio nuevo inválido.' });
                     const allMuns = await ProjectModel.getAllMunicipios();
                     const existM = allMuns.find(m => cleanData(m.nombre) === cleanData(munName));
                     if(existM) mId = existM.id;
@@ -144,19 +163,37 @@ const controller = {
                 }
 
                 if (String(iId).startsWith('new_')) {
-                    const instName = loc.nombre_institucion_nueva;
+                    const instName = cleanData(loc.nombre_institucion_nueva);
+                    if (!instName) return res.status(400).json({ error: 'Nombre de institución nueva inválido.' });
                     const allInsts = await ProjectModel.getInstitucionesByMunicipio(mId);
                     const existI = allInsts.find(i => cleanData(i.nombre) === cleanData(instName));
                     if(existI) iId = existI.id;
-                    else iId = await ProjectModel.createInstitucion(instName, mId);
+                    else {
+                        try { iId = await ProjectModel.createInstitucion(instName, mId); }
+                        catch (e) {
+                            const retry = await ProjectModel.getInstitucionesByMunicipio(mId);
+                            const found = retry.find(i => cleanData(i.nombre) === cleanData(instName));
+                            if (!found) throw e;
+                            iId = found.id;
+                        }
+                    }
                 }
 
                 if (String(sId).startsWith('new_')) {
-                    const sedeName = loc.nombre_sede_nueva;
+                    const sedeName = cleanData(loc.nombre_sede_nueva);
+                    if (!sedeName) return res.status(400).json({ error: 'Nombre de sede nueva inválido.' });
                     const allSedes = await ProjectModel.getSedesByInstitucion(iId);
                     const existS = allSedes.find(s => cleanData(s.nombre) === cleanData(sedeName));
                     if(existS) sId = existS.id;
-                    else sId = await ProjectModel.createSede(sedeName, iId);
+                    else {
+                        try { sId = await ProjectModel.createSede(sedeName, iId); }
+                        catch (e) {
+                            const retry = await ProjectModel.getSedesByInstitucion(iId);
+                            const found = retry.find(s => cleanData(s.nombre) === cleanData(sedeName));
+                            if (!found) throw e;
+                            sId = found.id;
+                        }
+                    }
                 }
 
                 // Guardar seguimiento
@@ -359,12 +396,34 @@ const controller = {
                 "VALOR ADICIÓN": row.valor_adicion,
                 "FUENTE ADICIÓN": row.fuente_adicion,
                 "% AVANCE": row.porcentaje_avance,
-                "FECHA SEGUIMIENTO": row.fecha_seguimiento,
+                "FECHA SEGUIMIENTO": parseFechaSeguimiento(row.fecha_seguimiento),
                 "RESPONSABLE": row.responsable,
                 "OBSERVACIONES": row.observaciones
             }));
 
             const ws = xlsx.utils.json_to_sheet(data, { header: headers, skipHeader: false });
+            ws['!cols'] = [
+                { wch: 16 }, { wch: 14 }, { wch: 42 }, { wch: 28 }, { wch: 42 }, { wch: 20 },
+                { wch: 30 }, { wch: 30 }, { wch: 30 }, { wch: 18 }, { wch: 15 }, { wch: 15 },
+                { wch: 15 }, { wch: 15 }, { wch: 26 }, { wch: 12 }, { wch: 16 }, { wch: 22 },
+                { wch: 12 }, { wch: 18 }, { wch: 24 }, { wch: 40 }
+            ];
+
+            const range = xlsx.utils.decode_range(ws['!ref']);
+            for (let R = 1; R <= range.e.r; R++) {
+                const setCellFormat = (col, type, format) => {
+                    const ref = xlsx.utils.encode_cell({ r: R, c: col });
+                    if (!ws[ref]) return;
+                    ws[ref].t = type;
+                    if (format) ws[ref].z = format;
+                };
+
+                [1].forEach(col => setCellFormat(col, 'n', '0')); // AÑO CONTRATO
+                [9, 10, 11, 12, 13, 16].forEach(col => setCellFormat(col, 'n', '$#,##0.00_);[Red]($#,##0.00)')); // Dinero
+                [18].forEach(col => setCellFormat(col, 'n', '0.00')); // % AVANCE
+                setCellFormat(19, 'd', 'dd/mm/yyyy'); // FECHA
+            }
+
             const wb = xlsx.utils.book_new();
             xlsx.utils.book_append_sheet(wb, ws, "Seguimiento");
             
