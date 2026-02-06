@@ -54,11 +54,11 @@ const controller = {
     search: async (req, res) => { try { const q = req.query.q; if (!q) return res.json([]); res.json(await ProjectModel.search(q)); } catch (e) { res.status(500).json({ error: 'Error búsqueda' }); } },
     getProject: async (req, res) => {
         try {
-            const p = await ProjectModel.findByBpin(req.params.bpin);
+            const p = await ProjectModel.search(req.params.bpin);
             if (p) {
-                const a = await ProjectModel.getActivitiesByProject(p.id);
-                const locations = await ProjectModel.getProjectLocations(p.id);
-                res.json({ found: true, project: p, activities: a, locations });
+                const a = await ProjectModel.getActivitiesByProject(p[0].id);
+                const locations = await ProjectModel.getProjectLocations(p[0].id);
+                res.json({ found: true, project: p[0], activities: a, locations });
             } else {
                 res.json({ found: false });
             }

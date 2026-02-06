@@ -13,7 +13,7 @@ const ProjectModel = {
 
     // Buscador general (BPIN o Nombre)
     search: (query) => {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {            
             const sql = `SELECT * FROM proyectos 
                          WHERE codigo_bpin LIKE ? OR nombre_proyecto LIKE ? 
                          LIMIT 10`;
