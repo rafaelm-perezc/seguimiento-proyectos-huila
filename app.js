@@ -1,7 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const open = require('open'); 
 const multer = require('multer');
+
 
 // Importamos el controlador
 const projectController = require('./src/controllers/projectController');
@@ -35,6 +37,7 @@ app.get('/api/project/:bpin', projectController.getProject);
 app.get('/api/activity-details/:activityId', projectController.getActivityDetails);
 // Nueva ruta para consultar sedes por actividad
 app.get('/api/activity-locations/:activityId', projectController.getActivityLocations);
+app.post('/api/cleanDB', projectController.cleanDB); // NUEVA RUTA PARA LIMPIAR LA BASE DE DATOS
 app.post('/api/save', projectController.saveData);
 app.post('/api/upload-excel', upload.single('archivoExcel'), projectController.uploadExcel);
 app.get('/api/export-excel', projectController.exportExcel);

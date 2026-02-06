@@ -368,8 +368,28 @@ getActivitiesByProject: (proyectoId) => {
 
             db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
         });
-    }
+    },
+    cleanDatabase: () => {
+        return new Promise((resolve, reject) => {
+            db.serialize(() => {
+                db.run("BEGIN TRANSACTION");
 
+                db.run("DELETE FROM seguimientos");
+                db.run("DELETE FROM actividades");
+                db.run("DELETE FROM proyectos", (err) => {
+                    if (err) {
+                        db.run("ROLLBACK");
+                        return reject(err);
+                    }
+
+                    db.run("COMMIT", (commitErr) => {
+                        if (commitErr) return reject(commitErr);
+                        resolve();
+                    });
+                });
+            });
+        });
+    }
 };
 
 module.exports = ProjectModel;

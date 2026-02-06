@@ -429,8 +429,37 @@ const controller = {
             res.setHeader('Content-Disposition', 'attachment; filename="Plantilla_Cargue_Masivo_Huila.xlsx"');
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             res.send(buffer);
-        } catch (error) { res.status(500).send('Error generando plantilla.'); }
+        } catch (error) { res.status(500).send('Error generando plantilla.'); };
+        
     },
+
+    cleanDB: async (req, res) => {
+
+        if (process.env.ALLOW_DB_CLEAN !== 'true') {
+            return res.status(403).json({
+                success: false,
+                error: 'Operación no permitida'
+            });
+        }
+
+        try {
+            await ProjectModel.cleanDatabase();
+
+            return res.status(200).json({
+                success: true,
+                message: 'Base de datos limpiada correctamente.'
+            });
+
+        } catch (error) {
+            console.error('Error limpiando BD:', error);
+
+            return res.status(500).json({
+                success: false,
+                error: 'Error interno del servidor'
+            });
+        }
+    },
+
 
     // -------------------------------------------------------------
     //   ⬇️ AQUÍ EMPIEZA EL CÓDIGO NUEVO PARA LAS GRÁFICAS ⬇️
@@ -513,7 +542,8 @@ const controller = {
             const data = await ProjectModel.getEvolutionData(filters);
             res.json(data);
         } catch (e) { res.status(500).json({ error: e.message }); }
-    }
+    },
+
 };
 
 module.exports = controller;

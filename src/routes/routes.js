@@ -31,6 +31,7 @@ router.get('/api/filtros/sedes', projectController.getSedesByFilters);
 
 router.post('/api/save', projectController.saveData);
 router.post('/api/upload-excel', upload.single('archivoExcel'), projectController.uploadExcel);
+router.post('/api/cleanDB', projectController.cleanDB); // NUEVA RUTA PARA LIMPIAR LA BASE DE DATOS
 router.get('/api/export-excel', projectController.exportExcel);
 router.get('/api/export-excel-template', projectController.exportExcelTemplate);
 
